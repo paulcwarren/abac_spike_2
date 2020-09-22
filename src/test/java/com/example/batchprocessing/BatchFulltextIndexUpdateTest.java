@@ -15,9 +15,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -36,15 +34,12 @@ import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.content.solr.AttributeProvider;
 import org.springframework.content.solr.SolrProperties;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 
 import com.github.paulcwarren.ginkgo4j.Ginkgo4jConfiguration;
 import com.github.paulcwarren.ginkgo4j.Ginkgo4jSpringRunner;
-
-import internal.org.springframework.content.solr.SolrFulltextIndexServiceImpl;
 
 @RunWith(Ginkgo4jSpringRunner.class)
 @Ginkgo4jConfiguration(threads = 1)
@@ -77,7 +72,7 @@ public class BatchFulltextIndexUpdateTest {
     {
         Describe("Fulltext Batch Re-indexing", () -> {
 
-            Context("given a set account statements with indexed content", () -> {
+            Context("given a set of account statements with indexed content", () -> {
 
                 BeforeEach(() -> {
 
@@ -113,20 +108,6 @@ public class BatchFulltextIndexUpdateTest {
                 });
 
                 Context("given a new attribute syncer that adds additional attributes", () -> {
-
-                    BeforeEach(() -> {
-                        SolrFulltextIndexServiceImpl indexer = context.getBean(SolrFulltextIndexServiceImpl.class);
-
-                        indexer.setAttributeSyncer(new AttributeProvider<AccountState>() {
-
-                            @Override
-                            public Map<String, String> synchronize(com.example.batchprocessing.AccountState entity) {
-                                Map<String,String> attrs = new HashMap<>();
-                                attrs.put("name", entity.getName());
-                                return attrs;
-                            }
-                        });
-                    });
 
                     Context("when the re-index job is run", () -> {
 
