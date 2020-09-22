@@ -1,10 +1,11 @@
 package com.example.batchprocessing;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.request.UpdateRequest;
+import org.apache.solr.common.SolrInputDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
@@ -17,10 +18,7 @@ public class AccountStateReindexingWriter implements ItemWriter<AccountState> {
     private static final Logger log = LoggerFactory.getLogger(AccountStateReindexingWriter.class);
 
     @Autowired
-    private AccountStateRepository repo;
-
-    @Autowired
-    private AccountStateStore store;
+    private SolrClient solr;
 
     @Override
     public void write(List<? extends AccountState> items)
@@ -30,11 +28,19 @@ public class AccountStateReindexingWriter implements ItemWriter<AccountState> {
 
             log.info("Re-indexing " + item);
 
-            InputStream in = store.getContent(item);
-            byte[] content = IOUtils.toByteArray(in);
+            SolrInputDocument newDoc = new SolrInputDocument();
 
-            item = store.setContent(item, new ByteArrayInputStream(content));
-            repo.save(item);
+            // this requires knowledge of how Spring Content generates it's id's
+            newDoc.addField("id", item.getClass().getCanonicalName() + ":" + item.getContentId());
+
+            // new fields (loaded from tenant configuration)
+            newDoc.addField("name", Collections.singletonMap("set", item.getName()));
+
+            UpdateRequest up = new UpdateRequest();
+            up.setBasicAuthCredentials("solr","SolrRocks");
+            up.add(newDoc);
+            up.process(solr, null);
+            up.commit(solr, null);
         }
     }
 }
